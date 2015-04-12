@@ -15,4 +15,7 @@ urlpatterns = patterns('',
     url(r'^signup$', 'chirp_app.views.signup'),
     url(r'^chirps$', 'chirp_app.views.public'),
     url(r'^submit$', 'chirp_app.views.submit'),
+    url(r'^users/$', 'chirp_app.views.users'),
+    url(r'^users/(?P<username>\w{0,30})/$', 'chirp_app.views.users'),
+    url(r'^follow$', 'chirp_app.views.follow'),
 )

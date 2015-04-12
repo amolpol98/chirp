@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from chirp_app.forms import AuthenticateForm, UserCreateForm, ChirpForm
 from chirp_app.models import Chirp
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count
+from django.http import Http404
+from django.core.exceptions import ObjectDoesNotExist
 
 def index(request, auth_form=None, user_form=None):
     # User is logged in
@@ -79,3 +82,42 @@ def public(request, chirp_form=None):
     chirps = Chirp.objects.reverse()[:10]
     return render(request,
                   'public.html', {'chirp_form': chirp_form, 'next_url': '/chirps', 'chirps': chirps, 'username': request.user.username})
+
+def get_latest(user):
+    try:
+        return user.chirp_set.order_by('-id')[0]
+    except IndexError:
+        return ''
+
+@login_required
+def users(request, username='', chirp_form=None):
+    if username:
+        # Show a profile
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise Http404
+        chirps = Chirp.objects.filter(user=user.id)
+        if username == request.user.username or request.user.profile.follows.filter(user__username=username):
+            # Self profile or buddies' profile
+            return render(request, 'user.html', {'user': user, 'chirps': chirps, })
+        return render(request, 'user.html', {'user': user, 'chirps': chirps, 'follow': True, })
+    users = User.objects.all().annotate(chirp_count=Count('chirp'))
+    chirps = map(get_latest, users)
+    obj = zip(users, chirps)
+    chirp_form = chirp_form or ChirpForm()
+    return render(request,
+                  'profiles.html', {'obj': obj, 'next_url': '/users/', 'chirp_form': chirp_form, 'username': request.user.username, })
+
+@login_required
+def follow(request):
+    if request.method == 'POST':
+        follow_id = request.POST.get('follow', False)
+        if follow_id:
+            print "coming hee", follow_id
+            try:
+                user = User.objects.get(id=follow_id)
+                request.user.profile.follows.add(user.profile)
+            except ObjectDoesNotExist:
+                return '/users/'
+    return redirect('/users/')
