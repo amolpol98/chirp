@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block login %}
+    {% with user.username as username %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock %}
+ 
+{% block content %}
+    <div class="panel right">
+        <h1>Create a Chirp</h1>
+        <p>
+            <form action="/submit" method="post">
+            {% for field in chirp_form %}{% csrf_token %}
+            {{ field }}
+            {% endfor %}
+            <input type="hidden" value="{{ next_url }}" name="next_url">
+            <input type="submit" value="Chirp!">
+            </form>
+        </p>
+    </div>
+    <div class="panel left">
+        <h1>Buddies' Chirps</h1>
+        {% for chirp in chirps %}
+        <div class="chirpWrapper">
+            <a href="/users/{{ chirp.user.username }}">
+                <img class="avatar" src="{{ chirp.user.profile.gravatar_url }}">
+                <span class="name">{{ chirp.user.first_name }}</span>
+            </a>
+            @{{ chirp.user.username }}
+            <p>
+                {{ chirp.content }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
