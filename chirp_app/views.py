@@ -3,6 +3,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from chirp_app.forms import AuthenticateForm, UserCreateForm, ChirpForm
 from chirp_app.models import Chirp
+from django.contrib.auth.decorators import login_required
 
 def index(request, auth_form=None, user_form=None):
     # User is logged in
@@ -57,3 +58,24 @@ def signup(request):
         else:
             return index(request, user_form=user_form)
     return redirect('/')
+
+@login_required
+def submit(request):
+    if request.method == 'POST':
+        chirp_form = ChirpForm(data=request.POST)
+        next_url = request.POST.get('next_url', '/')
+        if chirp_form.is_valid():
+            chirp = chirp_form.save(commit=False)
+            chirp.user = request.user
+            chirp.save()
+            return redirect('/')
+        else:
+            return public(request, chirp_form)
+    return redirect('/')
+
+@login_required
+def public(request, chirp_form=None):
+    chirp_form = chirp_form or ChirpForm()
+    chirps = Chirp.objects.reverse()[:10]
+    return render(request,
+                  'public.html', {'chirp_form': chirp_form, 'next_url': '/chirps', 'chirps': chirps, 'username': request.user.username})

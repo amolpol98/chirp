@@ -13,4 +13,6 @@ urlpatterns = patterns('',
     url(r'^login$', 'chirp_app.views.login_view'),
     url(r'^logout$', 'chirp_app.views.logout_view'),
     url(r'^signup$', 'chirp_app.views.signup'),
+    url(r'^chirps$', 'chirp_app.views.public'),
+    url(r'^submit$', 'chirp_app.views.submit'),
 )
